@@ -1,17 +1,16 @@
 import "dotenv/config";
 import { InlineKeyboard } from "grammy";
+import { Actions } from "./constants";
 
 const { Bot } = require("grammy");
 
-// Create a bot object
-const bot = new Bot(process.env.BOT_TOKEN); // <-- place your bot token in this string
-console.log(process.env.BOT_TOKEN);
+const bot = new Bot(process.env.BOT_TOKEN);
 
 // Show options when the bot starts
 bot.command("start", async (ctx: any) => {
   const keyboard = new InlineKeyboard()
-    .text("Check Balance", "check_balance") // First option
-    .text("Check Transactions", "check_transactions"); // Second option
+    .text("Check Solana Balance", Actions.CHECK_SOL_BALANCE)
+    .text("Parse Raydium Transaction", Actions.PARSE_TX);
   console.log("Starting the flow");
   await ctx.reply("What would you like to do?", {
     reply_markup: keyboard,
@@ -26,50 +25,25 @@ bot.on("message:text", (ctx: any) => {
 
 // Handle button clicks (callback queries)
 bot.on("callback_query:data", async (ctx: any) => {
-  const action = ctx.callbackQuery.data; // Get the action from the button
+  const action = ctx.callbackQuery.data;
   console.log("callback in play");
-  if (action === "check_balance") {
+  if (action === Actions.CHECK_SOL_BALANCE) {
     // Handle the Check Balance button click
-    await ctx.answerCallbackQuery(); // Acknowledge the button press
-    await ctx.reply("Your balance is: $123.45"); // Replace with actual logic
-  } else if (action === "check_transactions") {
+    await ctx.answerCallbackQuery();
+    // TODO: handle getting address for sol balance 
+    await ctx.reply("Your balance is: $123.45");
+  } else if (action === Actions.PARSE_TX) {
     // Handle the Check Transactions button click
-    await ctx.answerCallbackQuery(); // Acknowledge the button press
-    await ctx.reply("Your last transaction: -$45.67 on 2025-01-20"); // Replace with actual logic
+    await ctx.answerCallbackQuery();
+    // TODO: parse radyium transaction
+    await ctx.reply("Your last transaction: -$45.67 on 2025-01-20");
   } else {
     // Handle unexpected button actions
     await ctx.answerCallbackQuery("Unknown action!", { show_alert: true });
   }
 });
 
-// Handle user input
-// bot.on("message:text", async (ctx: any) => {
-//   const text = ctx.message.text;
-//   console.log("getting the message here")
-//   if (text === "Check Balance") {
-//     await ctx.reply("Your balance is: $123.45"); // Replace with your logic
-//   } else if (text === "Check Transactions") {
-//     await ctx.reply("Your last transaction: -$45.67 on 2025-01-20"); // Replace with your logic
-//   } else {
-//     await ctx.reply("Please select a valid option.");
-//   }
-// });
 
-// Send statistics upon `/stats`
-bot.command("stats", async (ctx: any) => {
-  const stats = ctx.match;
-  console.log(ctx.match);
-  console.log(stats);
-  // Format stats to string
-  const message = `<b>${stats} messages</b>`;
-
-  // Send message in same chat using `reply` shortcut. Don't forget to `await`!
-  await ctx.reply(message, { parse_mode: "HTML" });
-});
-
-// Catch errors and log them
 bot.catch((err: any) => console.error(err));
-// Start the bot (using long polling)
-bot.start(() => {
-  console.log("Started to list");
-});
+
+bot.start();
