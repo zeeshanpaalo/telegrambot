@@ -1,48 +1,104 @@
 import "dotenv/config";
-import { Context, InlineKeyboard } from "grammy";
+import { Bot, Context, session, type SessionFlavor } from "grammy";
+import { Menu } from "@grammyjs/menu";
+import { hydrate, type HydrateFlavor } from "@grammyjs/hydrate";
+import {
+  type Conversation,
+  type ConversationFlavor,
+  conversations,
+  createConversation,
+} from "@grammyjs/conversations";
 import { Actions } from "./constants";
 
-const { Bot } = require("grammy");
+interface SessionData {
+  address?: string;
+  txHash?: string;
+}
+type MyContext = ConversationFlavor<Context & SessionFlavor<SessionData>>;
 
-const bot = new Bot(process.env.BOT_TOKEN);
+type AddressContext = Context;
+type AddressConversation = Conversation<MyContext, AddressContext>;
 
-// Show options when the bot starts
-bot.command("start", async (ctx: Context) => {
-  const keyboard = new InlineKeyboard()
-    .text("Check Solana Balance", Actions.CHECK_SOL_BALANCE)
-    .text("Parse Raydium Transaction", Actions.PARSE_TX);
-  console.log("Starting the flow");
-  await ctx.reply("What would you like to do?", {
-    reply_markup: keyboard,
+type TxHashContext = HydrateFlavor<Context>;
+type TxHashConversation = Conversation<MyContext, TxHashContext>;
+
+const bot = new Bot<MyContext>(process.env.BOT_TOKEN!);
+
+bot.use(session({ initial: () => ({}) }));
+bot.use(conversations());
+
+const menu = new Menu<MyContext>("root")
+  .submenu("Check Solana Balance", Actions.CHECK_SOL_BALANCE)
+  .submenu("Parse Transaction", Actions.PARSE_TX);
+
+const checkBalance = new Menu<MyContext>(Actions.CHECK_SOL_BALANCE)
+  .text("Enter Address", (ctx) => ctx.conversation.enter("address"))
+  .back("Back");
+menu.register(checkBalance);
+
+const parseTxHash = new Menu<MyContext>(Actions.PARSE_TX)
+  .text("Enter Tx Hash", (ctx) => ctx.conversation.enter("txHash"))
+  .back("Back");
+menu.register(parseTxHash);
+
+async function address(conversation: AddressConversation, ctx: AddressContext) {
+  // Define the structure that the ouside menu expects.
+  const addressClone = conversation
+    .menu(Actions.CHECK_SOL_BALANCE)
+    .text("Enter Address")
+    .back("Back");
+
+  // Override the outside menu when the conversation is entered.
+  const addressMenu = conversation.menu().text("Cancel", async (ctx: any) => {
+    await ctx.menu.nav(Actions.CHECK_SOL_BALANCE, { immediate: true });
+    await conversation.halt();
   });
+  await ctx.editMessageReplyMarkup({ reply_markup: addressMenu });
+
+  await ctx.reply("Please enter Address");
+  const address = await conversation.form.text();
+  await conversation.external((ctx: any) => (ctx.session.addres = address));
+  // TODO: Fetch balance
+  await ctx.reply(`Balance of ${address}: 0.99 SOL`);
+
+  await ctx.editMessageReplyMarkup({ reply_markup: addressClone });
+}
+
+async function txHash(conversation: TxHashConversation, ctx: TxHashContext) {
+  // Define the structure that the ouside menu expects.
+  const txHashClone = conversation
+    .menu(Actions.PARSE_TX)
+    .text("Enter Tx Hash")
+    .back("Back");
+
+  // Override the outside menu when the conversation is entered.
+  const txHashMenu = conversation.menu().text("Cancel", async (ctx: any) => {
+    await ctx.menu.nav(Actions.PARSE_TX, { immediate: true });
+    await conversation.halt();
+  });
+  await ctx.editMessageReplyMarkup({ reply_markup: txHashMenu });
+
+  await ctx.reply("Please enter Transaction Hash for Raydium");
+  const txHash = await conversation.form.text();
+  await conversation.external((ctx: any) => (ctx.session.txHash = txHash));
+  // TODO: Parse transaction
+  await ctx.reply(`Parsed transaction for hash ${txHash}: {
+    type: Sell
+  }`);
+
+  await ctx.editMessageReplyMarkup({ reply_markup: txHashClone });
+}
+
+bot.use(createConversation(address));
+
+bot.use(createConversation(txHash, { plugins: [hydrate()] }));
+
+bot.use(menu);
+
+bot.command("start", async (ctx) => {
+  await ctx.reply("What would you like to do?", { reply_markup: menu });
 });
 
-// Register listeners to handle messages
-bot.on("message:text", (ctx: Context) => {
-  console.log("User Input");
-  ctx.reply("Echo: " + ctx.message?.text);
-});
-
-// Handle button clicks (callback queries)
-bot.on("callback_query:data", async (ctx: Context) => {
-  const action = ctx.callbackQuery?.data;
-  console.log("callback in play");
-  if (action === Actions.CHECK_SOL_BALANCE) {
-    // Handle the Check Balance button click
-    await ctx.answerCallbackQuery();
-    // TODO: handle getting address for sol balance
-    await ctx.reply("Your balance is: $123.45");
-  } else if (action === Actions.PARSE_TX) {
-    // Handle the Check Transactions button click
-    await ctx.answerCallbackQuery();
-    // TODO: parse radyium transaction
-    await ctx.reply("Your last transaction: -$45.67 on 2025-01-20");
-  } else {
-    // Handle unexpected button actions
-    await ctx.answerCallbackQuery("Unknown action!");
-  }
-});
-
-bot.catch((err: any) => console.error(err));
+bot.use((ctx) => ctx.reply("Send /start"));
 
 bot.start();
