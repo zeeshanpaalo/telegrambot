@@ -1,9 +1,11 @@
+import "dotenv/config";
 import { InlineKeyboard } from "grammy";
 
 const { Bot } = require("grammy");
 
 // Create a bot object
-const bot = new Bot("7604428524:AAEWc7NxwLiKRRqjn2DMOAumsJAVU5nc8K4"); // <-- place your bot token in this string
+const bot = new Bot(process.env.BOT_TOKEN); // <-- place your bot token in this string
+console.log(process.env.BOT_TOKEN);
 
 // Show options when the bot starts
 bot.command("start", async (ctx: any) => {
@@ -25,7 +27,7 @@ bot.on("message:text", (ctx: any) => {
 // Handle button clicks (callback queries)
 bot.on("callback_query:data", async (ctx: any) => {
   const action = ctx.callbackQuery.data; // Get the action from the button
-  console.log("callback in play")
+  console.log("callback in play");
   if (action === "check_balance") {
     // Handle the Check Balance button click
     await ctx.answerCallbackQuery(); // Acknowledge the button press
