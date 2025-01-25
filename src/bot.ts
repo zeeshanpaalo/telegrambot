@@ -9,6 +9,8 @@ import {
   createConversation,
 } from "@grammyjs/conversations";
 import { Actions } from "./constants";
+import { Connection } from "@solana/web3.js";
+import SolanaService from "./services/sol";
 
 interface SessionData {
   address?: string;
@@ -21,6 +23,10 @@ type AddressConversation = Conversation<MyContext, AddressContext>;
 
 type TxHashContext = HydrateFlavor<Context>;
 type TxHashConversation = Conversation<MyContext, TxHashContext>;
+
+// Sol service
+const connection = new Connection(process.env.ENDPOINT!, "confirmed");
+const solanaService = new SolanaService(connection);
 
 const bot = new Bot<MyContext>(process.env.BOT_TOKEN!);
 
@@ -59,7 +65,9 @@ async function address(conversation: AddressConversation, ctx: AddressContext) {
   const address = await conversation.form.text();
   await conversation.external((ctx: any) => (ctx.session.addres = address));
   // TODO: Fetch balance
-  await ctx.reply(`Balance of ${address}: 0.99 SOL`);
+  const balance = await solanaService.getBalance(address);
+  console.log(balance);
+  await ctx.reply(`Balance of ${address}: ${balance} SOL`);
 
   await ctx.editMessageReplyMarkup({ reply_markup: addressClone });
 }
