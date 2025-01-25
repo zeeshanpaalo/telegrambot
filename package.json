@@ -19,6 +19,7 @@
     "@grammyjs/hydrate": "^1.4.1",
     "@grammyjs/menu": "^1.0.2",
     "@solana/web3.js": "^1.98.0",
+    "axios": "^1.7.9",
     "dotenv": "^16.4.7",
     "grammy": "^1.4.3"
   }

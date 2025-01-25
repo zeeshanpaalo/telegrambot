@@ -11,6 +11,7 @@ import {
 import { Actions } from "./constants";
 import { Connection } from "@solana/web3.js";
 import SolanaService from "./services/sol";
+import CoinGeckoService from "./services/coinGeeko";
 
 interface SessionData {
   address?: string;
@@ -27,6 +28,7 @@ type TxHashConversation = Conversation<MyContext, TxHashContext>;
 // Sol service
 const connection = new Connection(process.env.ENDPOINT!, "confirmed");
 const solanaService = new SolanaService(connection);
+const coinGecko = new CoinGeckoService();
 
 const bot = new Bot<MyContext>(process.env.BOT_TOKEN!);
 
@@ -67,7 +69,15 @@ async function address(conversation: AddressConversation, ctx: AddressContext) {
   // TODO: Fetch balance
   const balance = await solanaService.getBalance(address);
   console.log(balance);
-  await ctx.reply(`Balance of ${address}: ${balance} SOL`);
+  // Get USD equivalent
+  const solanaPrice = await coinGecko.getPrice("solana", "usd");
+  console.log("prie of sol");
+  console.log(solanaPrice);
+  await ctx.reply(
+    `Balance of ${address}: ${balance} SOL & USD BALANCE = ${
+      balance * solanaPrice.usd
+    } $USD`
+  );
 
   await ctx.editMessageReplyMarkup({ reply_markup: addressClone });
 }
