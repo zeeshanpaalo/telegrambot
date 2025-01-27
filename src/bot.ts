@@ -100,9 +100,9 @@ async function txHash(conversation: TxHashConversation, ctx: TxHashContext) {
   const txHash = await conversation.form.text();
   await conversation.external((ctx: any) => (ctx.session.txHash = txHash));
   // TODO: Parse transaction
-  await ctx.reply(`Parsed transaction for hash ${txHash}: {
-    type: Sell
-  }`);
+  const parsedTx = await solanaService.parseTx(txHash);
+  //   console.log(parsedTx);
+  await ctx.reply(`Parsed transaction for hash: ${JSON.stringify(parsedTx)}`);
 
   await ctx.editMessageReplyMarkup({ reply_markup: txHashClone });
 }
