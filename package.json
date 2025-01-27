@@ -12,7 +12,8 @@
   "license": "ISC",
   "devDependencies": {
     "ts-node": "^10.9.2",
-    "typescript": "^5.7.3"
+    "typescript": "^5.7.3",
+    "@types/bn.js": "^5.1.0"
   },
   "dependencies": {
     "@coral-xyz/anchor": "^0.29.0",
