@@ -27,7 +27,7 @@ class CoinGeckoService {
           "x-cg-demo-api-key": `${process.env.PRICE_API}`, // TODO: MOVE TO ENV
         },
       });
-      //   console.log(response.data.solana);
+
       return response.data.solana;
     } catch (error: any) {
       console.error("Error in CoinGeckoService.getPrice:", error.message);

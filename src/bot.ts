@@ -68,11 +68,9 @@ async function address(conversation: AddressConversation, ctx: AddressContext) {
   await conversation.external((ctx: any) => (ctx.session.addres = address));
   // TODO: Fetch balance
   const balance = await solanaService.getBalance(address);
-  console.log(balance);
   // Get USD equivalent
   const solanaPrice = await coinGecko.getPrice("solana", "usd");
-  console.log("prie of sol");
-  console.log(solanaPrice);
+
   await ctx.reply(
     `Balance of ${address}: ${balance} SOL & USD BALANCE = ${
       balance * solanaPrice.usd
@@ -101,7 +99,7 @@ async function txHash(conversation: TxHashConversation, ctx: TxHashContext) {
   await conversation.external((ctx: any) => (ctx.session.txHash = txHash));
   // TODO: Parse transaction
   const parsedTx = await solanaService.parseTx(txHash);
-  //   console.log(parsedTx);
+
   await ctx.reply(`Parsed transaction for hash: ${JSON.stringify(parsedTx)}`);
 
   await ctx.editMessageReplyMarkup({ reply_markup: txHashClone });

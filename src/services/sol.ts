@@ -71,7 +71,6 @@ class SolanaService {
             accounts.outputTokenMint.toString() == WSOL)
         ) {
           // so its a swap
-          console.log("Its a valid swap involving wsol");
           if (decodeBuffer.slice(0, 8).equals(baseOutput.slice(0, 8))) {
             functionName = "swap_base_output";
           }
@@ -116,7 +115,7 @@ class SolanaService {
     const parsedTx = await this.connection.getParsedTransaction(txSignature, {
       maxSupportedTransactionVersion: 0,
     });
-    console.log(parsedTx);
+  
     if (!parsedTx) {
       return null;
     }
@@ -124,7 +123,7 @@ class SolanaService {
     const ray_Ins = this.getRaydiumInstruction(
       parsedTx?.transaction?.message.instructions
     );
-    // console.log(ray_instruction);
+  
     if (!ray_Ins) {
       console.log("Not a valid raydium SWAP transaction");
       return null;
@@ -135,8 +134,6 @@ class SolanaService {
     if (!meta) {
       return null;
     }
-    console.log(meta.preTokenBalances);
-    console.log(meta.postTokenBalances);
     // Extract more data from the instruction
     const swapDetails = this.extractInfo(
       meta,
@@ -166,7 +163,7 @@ class SolanaService {
     const balanceInfo = balances?.find(
       (b) => b.owner == RAY_VAULT_AUTH && b.mint == mint
     );
-    console.log(balanceInfo);
+   
     const balance = balanceInfo ? balanceInfo.uiTokenAmount.uiAmount! : 0;
     const decimal = balanceInfo ? balanceInfo.uiTokenAmount.decimals : 9;
     return { balance, decimal };
@@ -251,10 +248,6 @@ class SolanaService {
 
     let decimals: number = 9;
 
-    console.log(changes);
-    console.log(changes.inputBalanceChange.toString());
-    console.log(changes.outputBalanceChange.toString());
-
     if (functionName == "swap_base_input") {
       const decodedData =
         decodeBase58?.data as unknown as DecodedBaseInputInstructionData;
@@ -270,15 +263,12 @@ class SolanaService {
         decimals = changes.outputDecimal;
       } else {
         // alttoken is given in to get wsol ==>> SELL
-        console.log("------===================sdfsdfsdfs");
         type = "SELL";
         amountIn = changes.inputBalanceChange;
-        console.log(amountIn.toString());
         amountOut = changes.outputBalanceChange * -1;
         decimals = changes.inputDecimal;
       }
     } else if (functionName == "swap_base_output") {
-      console.log("Thisisidfisdfisdfsdf--s-d-f-asdf-sa-fdsa-f-s-fsd");
       const decodedData =
         decodeBase58?.data as unknown as DecodedBaseOutputInstructionData;
       instructionArguments.maxAmountIn = decodedData.maxAmountIn.toString();
